@@ -1,7 +1,7 @@
-import React, {useState, useEffect} from "react";
+import React, {useEffect, useState, MouseEvent} from "react";
 import {useSelector, useDispatch} from "react-redux";
 import {makeStyles, createStyles, Theme} from "@material-ui/core";
-import {Paper, Table, TableContainer, TableHead, TableBody, TableCell, TableRow} from "@material-ui/core";
+import {Paper, Table, TableContainer, TableHead, TableBody, TableCell, TablePagination,TableRow} from "@material-ui/core";
 
 import {RootState} from "../store/configureStore";
 import {Shipment} from "../reducers/shipment";
@@ -67,9 +67,11 @@ const columns: Column[] = [
 ]
 
 const ShipmentTable = () => {
-    const classes = useStyles();
     const state = useSelector((state: RootState) => state);
     const dispatch = useDispatch();
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(20);
+    const classes = useStyles();
 
     useEffect(() => {
         fetch("http://localhost:3001/shipments")
@@ -79,6 +81,17 @@ const ShipmentTable = () => {
                 dispatch(setShipments(data))
             })
     },[])
+
+    // onChangePage fires MouseEvent that is not React.MouseEvent
+    const handleChangePage = ( _event: unknown, page: number) => {
+        setPage(page);
+    }
+
+    const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setRowsPerPage(+event.target.value)
+        setPage(0)
+    }
+
 
     return (
         <Paper className={classes.root}>
@@ -101,7 +114,7 @@ const ShipmentTable = () => {
                     </TableHead>
                     <TableBody>
                         {
-                            state.shipments.map(shipment => {
+                            state.shipments.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map(shipment => {
                                 return (
                                     <TableRow hover>
                                         {
@@ -120,6 +133,15 @@ const ShipmentTable = () => {
                     </TableBody>
                 </Table>
             </TableContainer>
+            <TablePagination
+                rowsPerPageOptions={[10, 20, 30]}
+                component="div"
+                count={state.shipments.length}
+                rowsPerPage={rowsPerPage}
+                page={page}
+                onChangePage={handleChangePage}
+                onChangeRowsPerPage={handleChangeRowsPerPage}
+            />
         </Paper>
     )
 }
