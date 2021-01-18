@@ -55,4 +55,5 @@ export const shipmentReducer = createReducer(initialState, builder => {
         .addCase(updateShipment, (state, action) => {
                 state.name = action.payload
         })
+        .addDefaultCase(state => state)
 })
