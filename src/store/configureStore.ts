@@ -1,4 +1,4 @@
-import {configureStore, Middleware} from '@reduxjs/toolkit';
+import {configureStore, Middleware, combineReducers} from '@reduxjs/toolkit';
 
 import {shipmentsReducer} from '../reducers/shipments';
 
@@ -9,18 +9,19 @@ export const logger: Middleware<
 
     // Call the next dispatch method in the middleware chain.
     const returnValue = next(action)
-
     console.log('state after dispatch', store.getState())
 
-    // This will likely be the action itself, unless
-    // a middleware further in chain changed it.
     return returnValue
 }
 
-let preloadedState
+const rootReducer = combineReducers({
+    shipments : shipmentsReducer // single slice for now
+})
+
+export type RootState = ReturnType<typeof rootReducer>;
 
 const store = configureStore({
-    reducer : shipmentsReducer, // single slice for now
+    reducer : rootReducer,
     middleware: (getDefaultMiddleware => getDefaultMiddleware().concat(logger))
 })
 
