@@ -1,7 +1,7 @@
-import React, {useEffect, useState, MouseEvent} from "react";
+import React, {useEffect, useState} from "react";
 import {useSelector, useDispatch} from "react-redux";
 import {makeStyles, createStyles, Theme} from "@material-ui/core";
-import {Paper, Table, TableContainer, TableHead, TableBody, TableCell, TablePagination,TableRow} from "@material-ui/core";
+import {Paper, Table, TableContainer, TableHead, TableBody, TableCell, TablePagination,TableRow, TableSortLabel} from "@material-ui/core";
 
 import {RootState} from "../store/configureStore";
 import {Shipment} from "../reducers/shipment";
@@ -22,55 +22,78 @@ const useStyles = makeStyles((theme: Theme) => {
 
 interface Column {
     id: keyof Shipment,
-    label: string,
+    label: keyof Shipment,
     minWidth?: number,
     align?: "right",
+    order?: "asc" | "desc" | undefined
+    active: boolean
 }
 
-const columns: Column[] = [
+const tableColumns : Column[] = [
     {
         id: "id",
-        label: "ID",
-        minWidth: 50
+        label: "id",
+        minWidth: 50,
+        active: false,
     },
     {
         id: "origin",
-        label: "Origin",
-        minWidth: 50
+        label: "origin",
+        minWidth: 50,
+        active: false,
     },
     {
         id: "mode",
-        label: "Mode",
-        minWidth: 50
+        label: "mode",
+        minWidth: 50,
+        active: false
     },
     {
         id: "destination",
-        label: "Destination",
-        minWidth: 50
+        label: "destination",
+        minWidth: 50,
+        active: false
     },
     {
         id: "status",
-        label: "Status",
-        minWidth: 50
+        label: "status",
+        minWidth: 50,
+        active: false
     },
     {
         id: "type",
-        label: "Type",
-        minWidth: 50
+        label: "type",
+        minWidth: 50,
+        active: false
     },
     {
         id: "total",
-        label: "Total",
+        label: "total",
         minWidth: 50,
-        align: "right"
+        align: "right",
+        active: false
     }
 ]
+
+const comparator = (prop: keyof Shipment, columnOrder: Column["order"]) => (a : Shipment,b : Shipment) => {
+    const order = columnOrder === "desc" ? -1 : 1;
+    console.log('order', order);
+    if(a[prop] < b[prop]) {
+        return -1 * order;
+    }
+    if(a[prop] > b[prop]) {
+        return 1 * order;
+    }
+    return 0;
+}
 
 const ShipmentTable = () => {
     const state = useSelector((state: RootState) => state);
     const dispatch = useDispatch();
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(20);
+    const [columns, setColumns] = useState(tableColumns);
+    const [rows, setRows] = useState<Shipment[]>([]);
     const classes = useStyles();
 
     useEffect(() => {
@@ -79,6 +102,7 @@ const ShipmentTable = () => {
             .then((data : Shipment[]) => {
                 console.log(data);
                 dispatch(setShipments(data))
+                setRows(data);
             })
     },[])
 
@@ -92,6 +116,29 @@ const ShipmentTable = () => {
         setPage(0)
     }
 
+    const onSortClick = (index: number) => () => {
+
+        setColumns(
+            columns.map((column, i) => {
+                return {
+                    ...column,
+                    active: index === i,
+                    order: (index === i && (column.order === "desc"? "asc": "desc")) || undefined // if current column is active(clicked) then toggle to either asc or desc, else set to undefined
+                }
+            })
+        )
+
+        setRows(
+            rows.slice()
+            .sort(
+                comparator(
+                    columns[index].label,
+                    columns[index].order
+                )
+            )
+        )
+    }
+
 
     return (
         <Paper className={classes.root}>
@@ -99,14 +146,20 @@ const ShipmentTable = () => {
                 <Table stickyHeader aria-label="sticky table">
                     <TableHead>
                         <TableRow>
-                            {columns. map(column => {
+                            {columns.map((column, index) => {
                                 return (
                                     <TableCell
                                         key={column.id}
                                         align={column.align}
                                         style={{minWidth: column.minWidth}}
                                     >
-                                        {column.label}
+                                        <TableSortLabel 
+                                            active={column.active}
+                                            direction={column.order}
+                                            onClick={onSortClick(index)}
+                                        >
+                                            {column.label}
+                                        </TableSortLabel>
                                     </TableCell>
                                 )
                             })}
@@ -114,9 +167,9 @@ const ShipmentTable = () => {
                     </TableHead>
                     <TableBody>
                         {
-                            state.shipments.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map(shipment => {
+                            rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map(shipment => {
                                 return (
-                                    <TableRow hover>
+                                    <TableRow hover key={shipment.id}>
                                         {
                                             columns.map(column => {
                                                 return (
