@@ -1,6 +1,6 @@
 import {configureStore, Middleware, combineReducers} from '@reduxjs/toolkit';
-import {connectRouter} from 'connected-react-router';
-import {History} from 'history'
+import {connectRouter, routerMiddleware} from 'connected-react-router';
+import {createBrowserHistory} from 'history'
 import {shipmentsReducer} from '../reducers/shipments';
 
 export const logger: Middleware<
@@ -15,16 +15,18 @@ export const logger: Middleware<
     return returnValue
 }
 
-const rootReducer = (history : History) => combineReducers({
+export const browserHistory = createBrowserHistory();
+
+const rootReducer = combineReducers({
     shipments : shipmentsReducer,
-    router: connectRouter(history)
+    router: connectRouter(browserHistory)
 })
 
 export type RootState = ReturnType<typeof rootReducer>;
 
-const store = (history : History) => configureStore({
-    reducer : rootReducer(history),
-    middleware: (getDefaultMiddleware => getDefaultMiddleware().concat(logger))
+const store = configureStore({
+    reducer : rootReducer,
+    middleware: (getDefaultMiddleware => getDefaultMiddleware().concat(logger, routerMiddleware(browserHistory)))
 })
 
 export default store;
