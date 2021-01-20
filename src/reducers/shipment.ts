@@ -48,12 +48,19 @@ export const initialState: Shipment = {
     userId: ''
 }
 
-export const updateShipment = createAction<string>(UPDATE_SHIPMENT);
+export const updateShipment = createAction<{id: string, name: string}>(UPDATE_SHIPMENT);
 
 export const shipmentReducer = createReducer(initialState, builder => {
     builder
         .addCase(updateShipment, (state, action) => {
-                state.name = action.payload
+            console.log(action.payload.name, "current payload");
+           const newState: Shipment = {
+               ...state,
+               name : action.payload.name
+           }
+
+           console.log(newState, 'newState');
+            return newState;
         })
         .addDefaultCase(state => state)
 })
