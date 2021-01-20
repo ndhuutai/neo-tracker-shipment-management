@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from "react";
 import {push} from "connected-react-router";
 
-import {useSelector, useDispatch} from "react-redux";
+import {useDispatch, useSelector} from "react-redux";
 import {
     makeStyles,
     createStyles,
@@ -188,19 +188,9 @@ const ShipmentTable = (props: ShipmentTableProps) => {
     const theme = useTheme();
     const smBreakpoint = useMediaQuery(theme.breakpoints.up("sm"));
 
-
-    // useEffect(() => {
-    //     fetch("http://localhost:3001/shipments")
-    //         .then(response => response.json())
-    //         .then((data: Shipment[]) => {
-    //             dispatch(setShipments(data))
-    //             setRows(data);
-    //         })
-    // }, [])
-
     useEffect(() => {
         setRows(shipments)
-    }, [])
+    }, [shipments])
 
 
     // onChangePage fires MouseEvent that is not React.MouseEvent
@@ -262,7 +252,12 @@ const ShipmentTable = (props: ShipmentTableProps) => {
     }
 
     const handleEditClick = (id: string) => (e: React.MouseEvent<HTMLButtonElement>) => {
-        dispatch(push(`/edit?id=${id}`))
+        e.stopPropagation();
+        dispatch(push(`/edit/${id}`))
+    }
+
+    const onRowClick = (id: string) => () => {
+        dispatch(push(`/details/${id}`))
     }
 
     return (
@@ -305,6 +300,7 @@ const ShipmentTable = (props: ShipmentTableProps) => {
                                     key={column.id}
                                     align={column.align}
                                     style={{minWidth: column.minWidth}}
+
                                 >
                                     <TableSortLabel
                                         active={column.active}
@@ -338,7 +334,7 @@ const ShipmentTable = (props: ShipmentTableProps) => {
                                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                                 .map(shipment => {
                                     return (
-                                        <TableRow hover key={shipment.id}>
+                                        <TableRow hover key={shipment.id} onClick={onRowClick(shipment.id)}>
                                             {
                                                 columns.map(column => {
                                                     let cell =
