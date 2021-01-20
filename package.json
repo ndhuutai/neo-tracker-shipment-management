@@ -49,6 +49,7 @@
   },
   "devDependencies": {
     "@types/react-redux": "^7.1.15",
-    "history": "^5.0.0"
+    "@types/react-router-dom": "^5.1.7",
+    "history": "4.10.1"
   }
 }
