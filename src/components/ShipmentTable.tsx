@@ -3,8 +3,9 @@ import {useSelector, useDispatch} from "react-redux";
 import {
     makeStyles,
     createStyles,
+    Button,
     Chip,
-    Fade,
+    ChipProps,
     Slide,
     Theme,
     TextField,
@@ -18,7 +19,8 @@ import {
     TablePagination,
     TableRow,
     TableSortLabel,
-    ChipProps,
+    useMediaQuery,
+    useTheme
 } from "@material-ui/core";
 
 import SearchIcon from "@material-ui/icons/Search";
@@ -36,7 +38,11 @@ const useStyles = makeStyles((theme: Theme) => {
             width: "100%"
         },
         container: {
-            maxHeight: 440
+            maxHeight: 678
+        },
+        showActionBtn: {
+            display: 'flex',
+            justifyContent: 'flex-end'
         }
     })
 })
@@ -49,7 +55,8 @@ interface Column {
     minWidth?: number,
     align?: "right",
     order?: Order
-    active: boolean
+    active: boolean,
+    hiddenAtSm?: boolean
 }
 
 const useFadedIconChipStlyes = makeStyles(() => {
@@ -61,7 +68,7 @@ const useFadedIconChipStlyes = makeStyles(() => {
 })
 
 interface FadedIconChipProps extends ChipProps {
-    onClick: () => void
+    onClick: () => void,
 }
 
 const FadedIconChip = (props: FadedIconChipProps) => {
@@ -75,57 +82,63 @@ const FadedIconChip = (props: FadedIconChipProps) => {
                 icon={<Slide direction={"right"} in={clicked} mountOnEnter unmountOnExit><CheckIcon/></Slide>}
                 onClick={() => {
                     setClicked(!clicked);
-                    if(props.onClick) {
-                        props.onClick()
-                    }
+                    props.onClick()
                 }}
             />
         )
 }
 
+// configurations
 const tableColumns: Column[] = [
     {
         id: "id",
         label: "id",
-        minWidth: 50,
+        minWidth: 20,
         active: false,
+        hiddenAtSm: false,
     },
     {
         id: "origin",
         label: "origin",
         minWidth: 50,
         active: false,
+        hiddenAtSm: true
     },
     {
         id: "mode",
         label: "mode",
-        minWidth: 50,
-        active: false
+        minWidth: 10,
+        active: false,
+        hiddenAtSm: true
     },
     {
         id: "destination",
         label: "destination",
         minWidth: 50,
-        active: false
+        active: false,
+        hiddenAtSm: true
     },
     {
         id: "status",
         label: "status",
-        minWidth: 50,
-        active: false
+        minWidth: 10,
+        active: false,
+        hiddenAtSm: false,
     },
     {
         id: "type",
         label: "type",
-        minWidth: 50,
-        active: false
+        minWidth: 10,
+        active: false,
+        hiddenAtSm: true
     },
     {
         id: "total",
         label: "total",
-        minWidth: 50,
+        minWidth: 20,
         align: "right",
-        active: false
+        active: false,
+        hiddenAtSm: false
     }
 ]
 
@@ -166,7 +179,13 @@ const ShipmentTable = () => {
     const [rows, setRows] = useState<Shipment[]>([]);
     const [search, setSearch] = useState("");
     const [filters, setFilters] = useState(initialFilters);
+    const [filterCount, setFilterCount] = useState(0);
+    const [isActionsHidden, setIsActionsHidden] = useState(true);
     const classes = useStyles();
+    const theme = useTheme();
+    const smBreakpoint = useMediaQuery(theme.breakpoints.up("sm"));
+
+
 
     useEffect(() => {
         fetch("http://localhost:3001/shipments")
@@ -176,6 +195,8 @@ const ShipmentTable = () => {
                 setRows(data);
             })
     }, [])
+
+
 
     // onChangePage fires MouseEvent that is not React.MouseEvent
     const handleChangePage = (_event: unknown, page: number) => {
@@ -214,7 +235,28 @@ const ShipmentTable = () => {
         setSearch(e.target.value.trim());
     }
 
-    console.log(filters, 'filters');
+    const onFilterClick = (index: number) => () => {
+        const newFilters : Filters = {
+            ...filters
+        };
+
+        Object.keys(filters).reduce((acc, curVal, curIndex) => {
+            if(index === curIndex) {
+                if(filters[curVal]) {
+                    setFilterCount((prevCount: number) => prevCount - 1);
+                    acc[curVal] = false;
+                } else {
+                    setFilterCount((prevCount: number) => prevCount + 1);
+                    acc[curVal] = true
+                }
+            }
+            return acc;
+        }, newFilters)
+
+        setFilters(newFilters);
+    }
+
+    console.log('breakpoint', smBreakpoint)
 
     return (
         <Paper className={classes.root}>
@@ -230,56 +272,90 @@ const ShipmentTable = () => {
                 }}
             />
             <div>
-                {Object.keys(filters).map(filterKey => {
+                {Object.keys(filters).map((filterKey, index) => {
                     return (
-                        <FadedIconChip key={filterKey} label={filterKey} onClick={() => {
-                            setFilters({
-                                ...filters,
-                                [filterKey] : !filters[filterKey]
-                            })
-                        }}/>
+                        <FadedIconChip 
+                            key={filterKey} 
+                            label={filterKey}
+                            onClick={onFilterClick(index)}
+                        />
                     )
                 })}
+            </div>
+            <div className={classes.showActionBtn}>
+                <Button onClick={() => setIsActionsHidden(!isActionsHidden)}>
+                    Show Actions
+                </Button>
             </div>
             <TableContainer className={classes.container}>
                 <Table stickyHeader aria-label="sticky table">
                     <TableHead>
                         <TableRow>
                             {columns.map((column, index) => {
-                                return (
-                                    <TableCell
-                                        key={column.id}
-                                        align={column.align}
-                                        style={{minWidth: column.minWidth}}
+                                // if hiddenAtSm is true
+                                //   if smBreakpoint is true
+                                let cell = <TableCell
+                                    key={column.id}
+                                    align={column.align}
+                                    style={{minWidth: column.minWidth}}
+                                >
+                                    <TableSortLabel
+                                        active={column.active}
+                                        direction={column.order}
+                                        onClick={onSortClick(index)}
                                     >
-                                        <TableSortLabel
-                                            active={column.active}
-                                            direction={column.order}
-                                            onClick={onSortClick(index)}
-                                        >
-                                            {column.label}
-                                        </TableSortLabel>
-                                    </TableCell>
-                                )
+                                        {column.label}
+                                    </TableSortLabel>
+                                </TableCell>;
+                                if(column.hiddenAtSm) {
+                                    if(!smBreakpoint) {
+                                        cell = <></>;
+                                    }
+                                }
+                                return cell; 
                             })}
+                            {!isActionsHidden && 
+                                <TableCell
+                                    align={"right"}
+                                    style={{minWidth: 50}}
+                                >
+                                    Actions
+                                </TableCell>
+                            }
                         </TableRow>
                     </TableHead>
                     <TableBody>
                         {
                             rows
-                                .filter(shipment => shipment.id.includes(search))
+                                .filter(shipment => shipment.id.includes(search) && (!filterCount || (filters[shipment.mode] || filters[shipment.status] || filters[shipment.type])))
                                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                                 .map(shipment => {
                                     return (
                                         <TableRow hover key={shipment.id}>
                                             {
                                                 columns.map(column => {
-                                                    return (
-                                                        <TableCell key={column.id} align={column.align}>
-                                                            {shipment[column.id]}
-                                                        </TableCell>
-                                                    )
+                                                    let cell = 
+                                                    <TableCell key={column.id} align={column.align}>
+                                                        {shipment[column.id]}
+                                                    </TableCell>
+                                                    ;
+                                                    if(column.hiddenAtSm) {
+                                                        if(!smBreakpoint) {
+                                                            cell = <></>;
+                                                        }
+                                                    }
+                                                    return cell; 
                                                 })
+                                            }
+                                            {!isActionsHidden && 
+                                                <TableCell
+                                                    align={"right"}
+                                                    style={{minWidth: 50}}
+                                                >
+                                                    <Button>
+                                                        Edit
+                                                    </Button>
+                                                </TableCell>
                                             }
                                         </TableRow>
                                     )
