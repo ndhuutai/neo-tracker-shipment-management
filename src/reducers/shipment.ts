@@ -1,4 +1,4 @@
-import {createAction, createReducer} from "@reduxjs/toolkit";
+import {createAction, createAsyncThunk, createReducer} from "@reduxjs/toolkit";
 import {UPDATE_SHIPMENT} from '../constants/actionTypes'
 
 type Mode = "sea" | "air"
@@ -23,7 +23,7 @@ interface Cargo  {
 export interface Shipment {
     id: string,
     name: string
-    cargos: Cargo[],
+    cargo: Cargo[],
     mode: Mode,
     type: ContainerType,
     destination: string,
@@ -37,7 +37,7 @@ export interface Shipment {
 export const initialState: Shipment = {
     id: '',
     name: '',
-    cargos: [],
+    cargo: [],
     mode: 'air',
     type: "FCL",
     destination: '',
@@ -49,17 +49,18 @@ export const initialState: Shipment = {
 }
 
 export const updateShipment = createAction<{id: string, name: string}>(UPDATE_SHIPMENT);
-
+export const updateLocalShipment = createAsyncThunk("shipment/postByIdStatus",
+async (id:string, {dispatch}) => {
+}
+)
 export const shipmentReducer = createReducer(initialState, builder => {
     builder
         .addCase(updateShipment, (state, action) => {
-            console.log(action.payload.name, "current payload");
-           const newState: Shipment = {
+            const newState: Shipment = {
                ...state,
                name : action.payload.name
-           }
+            }
 
-           console.log(newState, 'newState');
             return newState;
         })
         .addDefaultCase(state => state)
