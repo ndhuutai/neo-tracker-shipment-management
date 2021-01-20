@@ -2,6 +2,8 @@ import React from "react";
 
 import {AppBar,Button, Typography, Toolbar, Hidden, IconButton  , makeStyles, createStyles, Theme} from "@material-ui/core";
 import MenuIcon from "@material-ui/icons/Menu";
+import {useDispatch} from "react-redux";
+import {push} from "connected-react-router";
 
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -11,6 +13,7 @@ const useStyles = makeStyles((theme: Theme) =>
         },
         title: {
             flexGrow: 1,
+            cursor: "pointer"
         },
     }),
 );
@@ -21,11 +24,12 @@ interface TopBarProps {
 
 const TopBar = ({setNavOpen} : TopBarProps) => {
     const classes = useStyles();
+    const dispatch = useDispatch();
 
     return (
         <AppBar>
             <Toolbar>
-                <Typography variant="h6" className={classes.title}>
+                <Typography variant="h6" className={classes.title} onClick={() => dispatch(push("/"))}>
                     Neo Tracker SM
                 </Typography>
                 <Hidden mdUp>
