@@ -1,5 +1,5 @@
-import {createReducer, createAction, PayloadAction} from "@reduxjs/toolkit";
-import {Shipment, updateShipment, shipmentReducer, initialState as initialShipmentState} from './shipment';
+import {createReducer, createAction} from "@reduxjs/toolkit";
+import {Shipment, updateShipment, shipmentReducer} from './shipment';
 import {REMOVE_SHIPMENT, SET_SHIPMENT} from "../constants/actionTypes";
 
 const initialState: Shipment[] = [];
@@ -13,7 +13,12 @@ export const shipmentsReducer = createReducer(initialState, builder => {
             return action.payload
         })
         .addCase(updateShipment, (state, action) => {
-            return state.map(shipment => shipmentReducer(shipment, action))
+            return state.map(shipment => {
+                if(shipment.id === action.payload.id) {
+                    return shipmentReducer(shipment, action)
+                }
+                return shipment;
+            })
         })
         .addCase(removeShipment,(state,action) => {
             return state.filter(shipment => shipment.id !== action.payload)
