@@ -1,5 +1,6 @@
 import {configureStore, Middleware, combineReducers} from '@reduxjs/toolkit';
-
+import {connectRouter} from 'connected-react-router';
+import {History} from 'history'
 import {shipmentsReducer} from '../reducers/shipments';
 
 export const logger: Middleware<
@@ -14,14 +15,15 @@ export const logger: Middleware<
     return returnValue
 }
 
-const rootReducer = combineReducers({
-    shipments : shipmentsReducer // single slice for now
+const rootReducer = (history : History) => combineReducers({
+    shipments : shipmentsReducer,
+    router: connectRouter(history)
 })
 
 export type RootState = ReturnType<typeof rootReducer>;
 
-const store = configureStore({
-    reducer : rootReducer,
+const store = (history : History) => configureStore({
+    reducer : rootReducer(history),
     middleware: (getDefaultMiddleware => getDefaultMiddleware().concat(logger))
 })
 
