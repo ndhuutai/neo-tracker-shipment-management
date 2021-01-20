@@ -1,4 +1,6 @@
 import React, {useEffect, useState} from "react";
+import {push} from "connected-react-router";
+
 import {useSelector, useDispatch} from "react-redux";
 import {
     makeStyles,
@@ -26,15 +28,15 @@ import {
 import SearchIcon from "@material-ui/icons/Search";
 import CheckIcon from "@material-ui/icons/Check";
 
-import {RootState} from "../store/configureStore";
 import {Shipment} from "../reducers/shipment";
+import {RootState} from "../store/configureStore";
+
 import {setShipments} from "../reducers/shipments";
 
 
 const useStyles = makeStyles((theme: Theme) => {
     return createStyles({
         root: {
-            paddingTop: theme.spacing(8),
             width: "100%"
         },
         container: {
@@ -76,16 +78,16 @@ const FadedIconChip = (props: FadedIconChipProps) => {
     const [clicked, setClicked] = useState(false);
 
     return (
-            <Chip
-                {...props}
-                className={classes.root}
-                icon={<Slide direction={"right"} in={clicked} mountOnEnter unmountOnExit><CheckIcon/></Slide>}
-                onClick={() => {
-                    setClicked(!clicked);
-                    props.onClick()
-                }}
-            />
-        )
+        <Chip
+            {...props}
+            className={classes.root}
+            icon={<Slide direction={"right"} in={clicked} mountOnEnter unmountOnExit><CheckIcon/></Slide>}
+            onClick={() => {
+                setClicked(!clicked);
+                props.onClick()
+            }}
+        />
+    )
 }
 
 // configurations
@@ -167,11 +169,12 @@ const initialFilters: Filters = {
     "ACTIVE": false,
 }
 
-// for every shipment
-// if shipment[
+interface ShipmentTableProps {
+    shipments: Shipment[]
+}
 
-const ShipmentTable = () => {
-    const state = useSelector((state: RootState) => state);
+const ShipmentTable = (props: ShipmentTableProps) => {
+    const {shipments} = useSelector((state: RootState) => state);
     const dispatch = useDispatch();
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(20);
@@ -186,16 +189,18 @@ const ShipmentTable = () => {
     const smBreakpoint = useMediaQuery(theme.breakpoints.up("sm"));
 
 
+    // useEffect(() => {
+    //     fetch("http://localhost:3001/shipments")
+    //         .then(response => response.json())
+    //         .then((data: Shipment[]) => {
+    //             dispatch(setShipments(data))
+    //             setRows(data);
+    //         })
+    // }, [])
 
     useEffect(() => {
-        fetch("http://localhost:3001/shipments")
-            .then(response => response.json())
-            .then((data: Shipment[]) => {
-                dispatch(setShipments(data))
-                setRows(data);
-            })
+        setRows(shipments)
     }, [])
-
 
 
     // onChangePage fires MouseEvent that is not React.MouseEvent
@@ -236,13 +241,13 @@ const ShipmentTable = () => {
     }
 
     const onFilterClick = (index: number) => () => {
-        const newFilters : Filters = {
+        const newFilters: Filters = {
             ...filters
         };
 
         Object.keys(filters).reduce((acc, curVal, curIndex) => {
-            if(index === curIndex) {
-                if(filters[curVal]) {
+            if (index === curIndex) {
+                if (filters[curVal]) {
                     setFilterCount((prevCount: number) => prevCount - 1);
                     acc[curVal] = false;
                 } else {
@@ -256,7 +261,9 @@ const ShipmentTable = () => {
         setFilters(newFilters);
     }
 
-    console.log('breakpoint', smBreakpoint)
+    const handleEditClick = (id: string) => (e: React.MouseEvent<HTMLButtonElement>) => {
+        dispatch(push(`/edit?id=${id}`))
+    }
 
     return (
         <Paper className={classes.root}>
@@ -274,8 +281,8 @@ const ShipmentTable = () => {
             <div>
                 {Object.keys(filters).map((filterKey, index) => {
                     return (
-                        <FadedIconChip 
-                            key={filterKey} 
+                        <FadedIconChip
+                            key={filterKey}
                             label={filterKey}
                             onClick={onFilterClick(index)}
                         />
@@ -307,20 +314,20 @@ const ShipmentTable = () => {
                                         {column.label}
                                     </TableSortLabel>
                                 </TableCell>;
-                                if(column.hiddenAtSm) {
-                                    if(!smBreakpoint) {
+                                if (column.hiddenAtSm) {
+                                    if (!smBreakpoint) {
                                         cell = <></>;
                                     }
                                 }
-                                return cell; 
+                                return cell;
                             })}
-                            {!isActionsHidden && 
-                                <TableCell
-                                    align={"right"}
-                                    style={{minWidth: 50}}
-                                >
-                                    Actions
-                                </TableCell>
+                            {!isActionsHidden &&
+                            <TableCell
+                                align={"right"}
+                                style={{minWidth: 50}}
+                            >
+                                Actions
+                            </TableCell>
                             }
                         </TableRow>
                     </TableHead>
@@ -334,28 +341,28 @@ const ShipmentTable = () => {
                                         <TableRow hover key={shipment.id}>
                                             {
                                                 columns.map(column => {
-                                                    let cell = 
-                                                    <TableCell key={column.id} align={column.align}>
-                                                        {shipment[column.id]}
-                                                    </TableCell>
+                                                    let cell =
+                                                        <TableCell key={column.id} align={column.align}>
+                                                            {shipment[column.id]}
+                                                        </TableCell>
                                                     ;
-                                                    if(column.hiddenAtSm) {
-                                                        if(!smBreakpoint) {
+                                                    if (column.hiddenAtSm) {
+                                                        if (!smBreakpoint) {
                                                             cell = <></>;
                                                         }
                                                     }
-                                                    return cell; 
+                                                    return cell;
                                                 })
                                             }
-                                            {!isActionsHidden && 
-                                                <TableCell
-                                                    align={"right"}
-                                                    style={{minWidth: 50}}
-                                                >
-                                                    <Button>
-                                                        Edit
-                                                    </Button>
-                                                </TableCell>
+                                            {!isActionsHidden &&
+                                            <TableCell
+                                                align={"right"}
+                                                style={{minWidth: 50}}
+                                            >
+                                                <Button onClick={handleEditClick(shipment.id)}>
+                                                    Edit
+                                                </Button>
+                                            </TableCell>
                                             }
                                         </TableRow>
                                     )
