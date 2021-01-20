@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from "react";
 import {FormControl, Input, InputLabel, Button, createStyles, makeStyles, Theme, Typography} from "@material-ui/core";
-import {useLocation} from "react-router";
+import {useParams} from "react-router";
 
 import {useSelector, useDispatch} from "react-redux";
 import {RootState} from "../store/configureStore";
@@ -21,16 +21,20 @@ const useStyles = makeStyles((theme: Theme) => {
     });
 })
 
+interface ParamsType {
+    id: string
+}
+
 const ShipmentEdit = () => {
     const classes = useStyles()
-    const location = useLocation();
+    const params = useParams<ParamsType>();
     const dispatch = useDispatch();
     const {shipments} = useSelector((state: RootState) => state)
     const [name, setName] = useState('');
     const [shipment, setShipment] = useState<Shipment | undefined>(undefined);
 
     useEffect(() => {
-        const selectedShipment = shipments.find(shipment => shipment.id === (new URLSearchParams(location.search)).get("id"))
+        const selectedShipment = shipments.find(shipment => shipment.id === params.id)
         setShipment(selectedShipment);
     }, [])
 
@@ -38,8 +42,8 @@ const ShipmentEdit = () => {
         e.preventDefault();
         if(shipment) {
             dispatch(updateShipment({id: shipment.id, name: name}))
+            dispatch(push(`/details/${shipment.id}`))
         }
-        dispatch(push("/"))
     }
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
