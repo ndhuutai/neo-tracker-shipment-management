@@ -13,6 +13,7 @@ import ShipmentEdit from "./components/ShipmentEdit";
 import {browserHistory, RootState} from "./store/configureStore";
 import {Shipment} from "./reducers/shipment";
 import {setShipments} from "./reducers/shipments";
+import ShipmentDetail from "./components/ShipmentDetail";
 
 const useStyles = makeStyles((theme: Theme) => {
   return createStyles({
@@ -32,19 +33,21 @@ function App() {
     fetch("http://localhost:3001/shipments")
         .then(response => response.json())
         .then((data: Shipment[]) => {
+          console.log('data', data);
           dispatch(setShipments(data))
         })
   }, [])
-
+  
+  console.log('shipments here', shipments)
   return <Layout>
     <TopBar setNavOpen={() => setOpen(true)}/>
     <NavBar isOpen={open} setOpen={setOpen}/>
     <div className={classes.container}>
       <ConnectedRouter history={browserHistory}>
         <Switch>
-          <Route exact path={"/edit"} component={ShipmentEdit}>
-          </Route>
-          <Route path={"/"}>
+          <Route path={"/edit/:id"} component={ShipmentEdit} />
+          <Route path={"/details/:id"} component={ShipmentDetail}/>
+          <Route exact path={"/"}>
             <ShipmentTable shipments={shipments}/>
           </Route>
         </Switch>
