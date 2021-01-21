@@ -6,7 +6,7 @@ import {useSelector, useDispatch} from "react-redux";
 import {RootState} from "../store/configureStore";
 import {push} from "connected-react-router";
 
-import {Shipment, updateShipment} from "../reducers/shipment";
+import {Shipment, updateShipment, startUpdateShipment} from "../reducers/shipment";
 
 
 const useStyles = makeStyles((theme: Theme) => {
@@ -29,19 +29,21 @@ const ShipmentEdit = () => {
     const classes = useStyles()
     const params = useParams<ParamsType>();
     const dispatch = useDispatch();
-    const {shipments} = useSelector((state: RootState) => state)
+    const selectedShipment = useSelector((state: RootState) => state.shipments.find(shipment => shipment.id === params.id))
     const [name, setName] = useState('');
     const [shipment, setShipment] = useState<Shipment | undefined>(undefined);
 
     useEffect(() => {
-        const selectedShipment = shipments.find(shipment => shipment.id === params.id)
-        setShipment(selectedShipment);
-    }, [])
+        if(selectedShipment) {
+            setShipment(selectedShipment);
+        }
+    }, [selectedShipment])
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if(shipment) {
-            dispatch(updateShipment({id: shipment.id, name: name}))
+            // dispatch(updateShipment({id: shipment.id, name: name}))
+            dispatch(startUpdateShipment({id: shipment.id, name: name}));
             dispatch(push(`/details/${shipment.id}`))
         }
     }

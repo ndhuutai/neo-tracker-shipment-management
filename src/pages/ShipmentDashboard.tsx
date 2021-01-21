@@ -6,9 +6,6 @@ import {
     makeStyles,
     createStyles,
     Button,
-    Chip,
-    ChipProps,
-    Slide,
     Theme,
     TextField,
     InputAdornment,
@@ -24,14 +21,13 @@ import {
     useMediaQuery,
     useTheme
 } from "@material-ui/core";
-
 import SearchIcon from "@material-ui/icons/Search";
-import CheckIcon from "@material-ui/icons/Check";
 
 import {Shipment} from "../reducers/shipment";
 import {RootState} from "../store/configureStore";
-
-import {setShipments} from "../reducers/shipments";
+import SlidingIconChip from "./SlidingIconChip";
+import {Column, Filters} from "../types/table";
+import { comparator } from "../utils/table";
 
 
 const useStyles = makeStyles((theme: Theme) => {
@@ -42,53 +38,18 @@ const useStyles = makeStyles((theme: Theme) => {
         container: {
             maxHeight: 678
         },
+        chipsContainer: {
+            padding: theme.spacing(2, 1),
+            "& > :not(:first-child)": {
+                marginLeft: theme.spacing(1)
+            }
+        },
         showActionBtn: {
-            display: 'flex',
-            justifyContent: 'flex-end'
+            display: "flex",
+            justifyContent: "flex-end"
         }
     })
 })
-
-type Order = "asc" | "desc" | undefined
-
-interface Column {
-    id: keyof Shipment,
-    label: keyof Shipment,
-    minWidth?: number,
-    align?: "right",
-    order?: Order
-    active: boolean,
-    hiddenAtSm?: boolean
-}
-
-const useFadedIconChipStlyes = makeStyles(() => {
-    return createStyles({
-        root: {
-            overflow: 'hidden'
-        }
-    })
-})
-
-interface FadedIconChipProps extends ChipProps {
-    onClick: () => void,
-}
-
-const FadedIconChip = (props: FadedIconChipProps) => {
-    const classes = useFadedIconChipStlyes();
-    const [clicked, setClicked] = useState(false);
-
-    return (
-        <Chip
-            {...props}
-            className={classes.root}
-            icon={<Slide direction={"right"} in={clicked} mountOnEnter unmountOnExit><CheckIcon/></Slide>}
-            onClick={() => {
-                setClicked(!clicked);
-                props.onClick()
-            }}
-        />
-    )
-}
 
 // configurations
 const tableColumns: Column[] = [
@@ -144,20 +105,7 @@ const tableColumns: Column[] = [
     }
 ]
 
-const comparator = (prop: keyof Shipment, columnOrder: Order) => (a: Shipment, b: Shipment) => {
-    const order = columnOrder === "desc" ? -1 : 1;
-    if (a[prop] < b[prop]) {
-        return -1 * order;
-    }
-    if (a[prop] > b[prop]) {
-        return 1 * order;
-    }
-    return 0;
-}
 
-interface Filters {
-    [key: string]: boolean,
-}
 
 const initialFilters: Filters = {
     "sea": false,
@@ -169,11 +117,12 @@ const initialFilters: Filters = {
     "ACTIVE": false,
 }
 
-interface ShipmentTableProps {
-    shipments: Shipment[]
-}
 
-const ShipmentTable = (props: ShipmentTableProps) => {
+const ShipmentTable = () => {
+    const classes = useStyles();
+    const theme = useTheme();
+    const smBreakpoint = useMediaQuery(theme.breakpoints.up("sm"));
+
     const {shipments} = useSelector((state: RootState) => state);
     const dispatch = useDispatch();
     const [page, setPage] = useState(0);
@@ -184,9 +133,6 @@ const ShipmentTable = (props: ShipmentTableProps) => {
     const [filters, setFilters] = useState(initialFilters);
     const [filterCount, setFilterCount] = useState(0);
     const [isActionsHidden, setIsActionsHidden] = useState(true);
-    const classes = useStyles();
-    const theme = useTheme();
-    const smBreakpoint = useMediaQuery(theme.breakpoints.up("sm"));
 
     useEffect(() => {
         setRows(shipments)
@@ -203,7 +149,7 @@ const ShipmentTable = (props: ShipmentTableProps) => {
         setPage(0)
     }
 
-    const onSortClick = (index: number) => () => {
+    const handleSortClick = (index: number) => () => {
         setColumns(
             columns.map((column, i) => {
                 return {
@@ -226,11 +172,11 @@ const ShipmentTable = (props: ShipmentTableProps) => {
         )
     }
 
-    const onSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setSearch(e.target.value.trim());
     }
 
-    const onFilterClick = (index: number) => () => {
+    const handleFilterClick = (index: number) => () => {
         const newFilters: Filters = {
             ...filters
         };
@@ -256,15 +202,18 @@ const ShipmentTable = (props: ShipmentTableProps) => {
         dispatch(push(`/edit/${id}`))
     }
 
-    const onRowClick = (id: string) => () => {
+    const handleRowClick = (id: string) => () => {
         dispatch(push(`/details/${id}`))
     }
+
+    const filteredRows = rows
+        .filter(shipment => shipment.id.includes(search) && (!filterCount || (filters[shipment.mode] || filters[shipment.status] || filters[shipment.type])))
 
     return (
         <Paper className={classes.root}>
             <TextField
                 value={search}
-                onChange={onSearchChange}
+                onChange={handleSearchChange}
                 InputProps={{
                     startAdornment: (
                         <InputAdornment position={"start"}>
@@ -273,13 +222,13 @@ const ShipmentTable = (props: ShipmentTableProps) => {
                     )
                 }}
             />
-            <div>
+            <div className={classes.chipsContainer}>
                 {Object.keys(filters).map((filterKey, index) => {
                     return (
-                        <FadedIconChip
+                        <SlidingIconChip
                             key={filterKey}
                             label={filterKey}
-                            onClick={onFilterClick(index)}
+                            onClick={handleFilterClick(index)}
                         />
                     )
                 })}
@@ -294,25 +243,22 @@ const ShipmentTable = (props: ShipmentTableProps) => {
                     <TableHead>
                         <TableRow>
                             {columns.map((column, index) => {
-                                // if hiddenAtSm is true
-                                //   if smBreakpoint is true
                                 let cell = <TableCell
                                     key={column.id}
                                     align={column.align}
                                     style={{minWidth: column.minWidth}}
-
                                 >
                                     <TableSortLabel
                                         active={column.active}
                                         direction={column.order}
-                                        onClick={onSortClick(index)}
+                                        onClick={handleSortClick(index)}
                                     >
                                         {column.label}
                                     </TableSortLabel>
                                 </TableCell>;
                                 if (column.hiddenAtSm) {
                                     if (!smBreakpoint) {
-                                        cell = <></>;
+                                        return null;
                                     }
                                 }
                                 return cell;
@@ -320,7 +266,6 @@ const ShipmentTable = (props: ShipmentTableProps) => {
                             {!isActionsHidden &&
                             <TableCell
                                 align={"right"}
-                                style={{minWidth: 50}}
                             >
                                 Actions
                             </TableCell>
@@ -329,12 +274,11 @@ const ShipmentTable = (props: ShipmentTableProps) => {
                     </TableHead>
                     <TableBody>
                         {
-                            rows
-                                .filter(shipment => shipment.id.includes(search) && (!filterCount || (filters[shipment.mode] || filters[shipment.status] || filters[shipment.type])))
+                            filteredRows
                                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                                 .map(shipment => {
                                     return (
-                                        <TableRow hover key={shipment.id} onClick={onRowClick(shipment.id)}>
+                                        <TableRow hover key={shipment.id} onClick={handleRowClick(shipment.id)}>
                                             {
                                                 columns.map(column => {
                                                     let cell =
@@ -344,7 +288,7 @@ const ShipmentTable = (props: ShipmentTableProps) => {
                                                     ;
                                                     if (column.hiddenAtSm) {
                                                         if (!smBreakpoint) {
-                                                            cell = <></>;
+                                                            return null;
                                                         }
                                                     }
                                                     return cell;
@@ -353,7 +297,6 @@ const ShipmentTable = (props: ShipmentTableProps) => {
                                             {!isActionsHidden &&
                                             <TableCell
                                                 align={"right"}
-                                                style={{minWidth: 50}}
                                             >
                                                 <Button onClick={handleEditClick(shipment.id)}>
                                                     Edit
@@ -370,7 +313,7 @@ const ShipmentTable = (props: ShipmentTableProps) => {
             <TablePagination
                 rowsPerPageOptions={[10, 20, 30]}
                 component="div"
-                count={rows.length}
+                count={filteredRows.length}
                 rowsPerPage={rowsPerPage}
                 page={page}
                 onChangePage={handleChangePage}

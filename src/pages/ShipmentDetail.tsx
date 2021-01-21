@@ -66,17 +66,17 @@ const ShipmentDetail = () => {
       <Divider/>
       <Typography variant="body1">
         Cargos
-          <List>
+      </Typography>
+      <List>
             {selectedShipment?.cargo.map((cargo, index) => {
-              return <ListItem key={cargo.description} divider={index === selectedShipment.cargo.length - 1? false: true }>
+              return <ListItem key={cargo.description} divider={index !== selectedShipment.cargo.length - 1}>
                   <ListItemText
                     primary={cargo.description}
                     secondary={`${cargo.type} | Volume: ${cargo.volume}`}
                   />
               </ListItem>
             })}
-          </List>
-      </Typography>
+      </List>
       <Button variant="contained" color="primary" onClick={onBtnClick}>
             Edit
       </Button>
