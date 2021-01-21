@@ -97,7 +97,7 @@ const tableColumns: Column[] = [
         label: "status",
         minWidth: 10,
         active: false,
-        hiddenAtSm: false,
+        hiddenAtSm: true,
     },
     {
         id: "type",
