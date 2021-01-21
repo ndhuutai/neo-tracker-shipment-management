@@ -10,7 +10,6 @@ import {
     Theme
 } from "@material-ui/core";
 
-import SearchIcon from "@material-ui/icons/Search";
 import HomeIcon from '@material-ui/icons/Home'
 
 const useStyles = makeStyles((theme: Theme) => {
@@ -46,14 +45,6 @@ const NavBar = ({isOpen, setOpen} : NavBarProps) => {
                         </ListItemIcon>
                         <ListItemText>
                             Dashboard
-                        </ListItemText>
-                    </ListItem>
-                    <ListItem button onClick={() => setOpen(false)}>
-                        <ListItemIcon>
-                            <SearchIcon/>
-                        </ListItemIcon>
-                        <ListItemText>
-                            Search by ID
                         </ListItemText>
                     </ListItem>
                 </List>

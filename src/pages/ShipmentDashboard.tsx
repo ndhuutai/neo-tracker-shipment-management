@@ -19,15 +19,15 @@ import {
     TableRow,
     TableSortLabel,
     useMediaQuery,
-    useTheme
+    useTheme, Typography
 } from "@material-ui/core";
 import SearchIcon from "@material-ui/icons/Search";
 
-import {Shipment} from "../reducers/shipment";
 import {RootState} from "../store/configureStore";
-import SlidingIconChip from "./SlidingIconChip";
+import SlidingIconChip from "../components/SlidingIconChip";
 import {Column, Filters} from "../types/table";
 import { comparator } from "../utils/table";
+import {Shipment} from "../types/shipment";
 
 
 const useStyles = makeStyles((theme: Theme) => {
@@ -41,12 +41,16 @@ const useStyles = makeStyles((theme: Theme) => {
         chipsContainer: {
             padding: theme.spacing(2, 1),
             "& > :not(:first-child)": {
-                marginLeft: theme.spacing(1)
+                marginLeft: theme.spacing(1),
+                marginBottom: theme.spacing(1)
             }
         },
         showActionBtn: {
             display: "flex",
             justifyContent: "flex-end"
+        },
+        searchField: {
+            padding: theme.spacing(2)
         }
     })
 })
@@ -61,9 +65,16 @@ const tableColumns: Column[] = [
         hiddenAtSm: false,
     },
     {
+        id: "name",
+        label: "name",
+        minWidth: 30,
+        active: false,
+        hiddenAtSm: false,
+    },
+    {
         id: "origin",
         label: "origin",
-        minWidth: 50,
+        minWidth: 20,
         active: false,
         hiddenAtSm: true
     },
@@ -118,7 +129,7 @@ const initialFilters: Filters = {
 }
 
 
-const ShipmentTable = () => {
+const ShipmentDashboard = () => {
     const classes = useStyles();
     const theme = useTheme();
     const smBreakpoint = useMediaQuery(theme.breakpoints.up("sm"));
@@ -207,13 +218,15 @@ const ShipmentTable = () => {
     }
 
     const filteredRows = rows
-        .filter(shipment => shipment.id.includes(search) && (!filterCount || (filters[shipment.mode] || filters[shipment.status] || filters[shipment.type])))
+        .filter(shipment => shipment.id.includes(search.toUpperCase()) && (!filterCount || (filters[shipment.mode] || filters[shipment.status] || filters[shipment.type])))
 
     return (
         <Paper className={classes.root}>
             <TextField
                 value={search}
                 onChange={handleSearchChange}
+                className={classes.searchField}
+                placeholder={"enter id to search"}
                 InputProps={{
                     startAdornment: (
                         <InputAdornment position={"start"}>
@@ -223,6 +236,9 @@ const ShipmentTable = () => {
                 }}
             />
             <div className={classes.chipsContainer}>
+                <Typography variant={"body1"}>
+                    Filters:
+                </Typography>
                 {Object.keys(filters).map((filterKey, index) => {
                     return (
                         <SlidingIconChip
@@ -253,7 +269,7 @@ const ShipmentTable = () => {
                                         direction={column.order}
                                         onClick={handleSortClick(index)}
                                     >
-                                        {column.label}
+                                        {column.label.charAt(0).toUpperCase() + column.label.substring(1)}
                                     </TableSortLabel>
                                 </TableCell>;
                                 if (column.hiddenAtSm) {
@@ -323,4 +339,4 @@ const ShipmentTable = () => {
     )
 }
 
-export default ShipmentTable;
+export default ShipmentDashboard;

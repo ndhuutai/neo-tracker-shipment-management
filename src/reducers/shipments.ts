@@ -1,11 +1,10 @@
-import {createReducer, createAction} from "@reduxjs/toolkit";
-import {Shipment, updateShipment, shipmentReducer} from './shipment';
-import {REMOVE_SHIPMENT, SET_SHIPMENT} from "../constants/actionTypes";
+import {createReducer} from "@reduxjs/toolkit";
+import {shipmentReducer} from './shipment';
+import {Shipment} from "../types/shipment";
+import {updateShipment} from "../actions/shipment";
+import {removeShipment, setShipments} from "../actions/shipments";
 
 const initialState: Shipment[] = [];
-
-export const setShipments = createAction<Shipment[]>(SET_SHIPMENT);
-export const removeShipment = createAction<string>(REMOVE_SHIPMENT);
 
 export const shipmentsReducer = createReducer(initialState, builder => {
     builder
